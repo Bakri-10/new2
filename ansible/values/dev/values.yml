@@ -1,10 +1,12 @@
 ---
-env: "development"
-vault_environment: "dev"
+env: "DEV"
+vault_environment: "DEV"
+aap_domain: "aap.devfg.rbc.com"
+ansible_domain: "devfg.rbc.com"
+survey_appcode: "ATU0"
 custom_field_values:
   customfield_15809: "PATUOSRVDVOPS"
   customfield_10717: "ATU0"
 
 # Vault specific values for dev
-VAULT_ENV: "dev"
-VAULT_ADDR: "https://vault.dev.example.com"
+VAULT_ENV: "DEV"

@@ -1,0 +1,48 @@
+---
+- name: Service Desk Request Submission
+  hosts: localhost
+  vars:
+    secrets:
+      - namespace: vault_credentials
+        app_code: "{{ survey_appcode | upper }}"
+        vault_env: "{{ vault_environment }}"
+        vault_secret_path: "AAP/service_desk/credentials"
+      - namespace: vault_extravers
+        app_code: "{{ survey_appcode | upper }}"
+        vault_env: "{{ vault_environment }}"
+        vault_secret_path: "AAP/service_desk/extra_vars"
+  roles:
+    - { role: rbc_common.hashicorp_vault.vault_init }
+
+  tasks:
+    - name: Fetch the bearer token from Vault
+      ansible.builtin.set_fact:
+        pat_bearer_token: "{{ vault[vault_environment].vault_credentials.pat_bearer_token }}"
+
+    - name: Send request to Service Desk API
+      ansible.builtin.uri:
+        url: "https://cjira.fg.rbc.com/rest/servicedeskapi/request"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ pat_bearer_token }}"
+        body: |
+          {
+            "serviceDeskId": "7",
+            "requestTypeId": "7165",
+            "requestFieldValues": {
+              "customfield_15809": "PATUOSRVDVOPS",
+              "customfield_10717": "ATU0"
+            }
+          }
+        body_format: json
+        return_content: yes
+      register: response
+
+    - name: Check if API call was successful
+      ansible.builtin.fail:
+        msg: "Failed to create Service Desk request: {{ response.msg }}"
+      when: response.status != 201
+
+    - name: Debug the response from Service Desk API
+      ansible.builtin.debug:
+        msg: "Response from Service Desk API: {{ response }}"

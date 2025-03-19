@@ -1,5 +1,5 @@
 ---
-environment: "development"
+env: "development"
 vault_environment: "dev"
 custom_field_values:
   customfield_15809: "PATUOSRVDVOPS"

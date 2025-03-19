@@ -1,0 +1,10 @@
+---
+environment: "development"
+vault_environment: "dev"
+custom_field_values:
+  customfield_15809: "PATUOSRVDVOPS"
+  customfield_10717: "ATU0"
+
+# Vault specific values for dev
+VAULT_ENV: "dev"
+VAULT_ADDR: "https://vault.dev.example.com"

@@ -1,63 +1,25 @@
 ---
-- name: Service Desk Request Submission
+- name: Tableau Data Extraction and Validation
   hosts: localhost
+  gather_facts: false
 
   vars_files:
-  - "ansible/values/global_values.yml"
-  - "ansible/values/{{ env }}/values.yml"
+  - "config/tableau_config.yml"
 
   vars:
+    vault_environment: "{{ env }}"
     secrets:
     - namespace: vault_credentials
       app_code: "{{ survey_appcode | upper }}"
-      vault_env: "{{ vault_environment }}"
+      vault_env: "{{ env }}"
       vault_secret_path: "{{ vault_secret_path }}/credentials"
       vault_role_id: "{{ vault_role_id }}"
       vault_secret_id: "{{ vault_secret_id }}"
-    - namespace: vault_extravars
-      app_code: "{{ survey_appcode | upper }}"
-      vault_env: "{{ vault_environment }}"
-      vault_secret_path: "{{ vault_secret_path }}/extra_vars"
 
   roles:
   - { role: rbc_common.hashicorp_vault.vault_init }
 
   tasks:
-  - name: Debug vault connection
-    ansible.builtin.debug:
-      msg: "Connected to vault at {{ VAULT_ADDR }} with environment {{ vault_environment }}"
-
-  - name: Fetch the bearer token from Vault
-    ansible.builtin.set_fact:
-      pat_bearer_token: "{{ vault[vault_environment].vault_credentials.pat_bearer_token }}"
-    no_log: true
-
-  - name: Send request to Service Desk API
-    ansible.builtin.uri:
-      url: "https://cjira.fg.rbc.com/rest/servicedeskapi/request"
-      method: POST
-      headers:
-        Authorization: "Bearer {{ pat_bearer_token }}"
-      body: |
-        {
-          "serviceDeskId": "7",
-          "requestTypeId": "7165",
-          "requestFieldValues": {
-            "customfield_15809": "PATUOSRVDVOPS",
-            "customfield_10717": "ATU0"
-          }
-        }
-      body_format: json
-      return_content: yes
-      validate_certs: no
-    register: response
-    no_log: true
-
-  - name: Check if API call was successful
-    ansible.builtin.fail:
-      msg: "Failed to create Service Desk request: {{ response.msg }}"
-    when: response.status != 201
-
-  - name: Debug the response from Service Desk API
-    ansible.builtin.debug:
-      msg: "Response from Service Desk API: {{ response }}"
+  - name: Include Tableau extraction tasks
+    ansible.builtin.include_tasks:
+      file: ansible/playbooks/extract_tableau_data.yml

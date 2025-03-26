@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tableau Data Extraction Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #003366;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #003366;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .success {
+            color: green;
+        }
+        .warning {
+            color: orange;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tableau Data Extraction Report</h1>
+        
+        <div class="section">
+            <h2>Extraction Summary</h2>
+            <p><strong>Date:</strong> {{ ansible_date_time.date }}</p>
+            <p><strong>Time:</strong> {{ ansible_date_time.time }}</p>
+            <p><strong>Status:</strong> 
+                {% if processed_data.rc == 0 %}
+                <span class="success">Success</span>
+                {% else %}
+                <span class="error">Failed</span>
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="section">
+            <h2>Data Statistics</h2>
+            <p><strong>Records Processed:</strong> {{ processed_data.stdout_lines | select('match', '.*Processed.*records') | first | regex_replace('.*Processed\s(\d+)\srecords.*', '\\1') }}</p>
+        </div>
+        
+        <div class="section">
+            <h2>Processing Logs</h2>
+            <pre>{{ processed_data.stdout }}</pre>
+        </div>
+    </div>
+</body>
+</html> 

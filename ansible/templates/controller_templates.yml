@@ -1,56 +1,15 @@
 ---
 app_controller_templates:
-  - name: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
-    job_type: run
-    playbook: main.yml
-    inventory: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
-    project: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
-    survey_enabled: true
-    ask_credential_on_launch: true
-    description: "Service Desk Request Job Template"
-    state: "present"
-    credentials:
-      - "{{ .Values.HELIOS_APP_CODE }}_HashiCorp_Vault_AppRoles"
-    extra_vars:
-      vault_environment: "{{ .Values.VAULT_ENV }}"
-
-- name: Fetch the bearer token from Vault
-  ansible.builtin.set_fact:
-    secrets:
-      - namespace: vault_credentials
-        app_code: "{{ survey_appcode | upper }}"
-        vault_env: "{{ vault_environment }}"
-        vault_secret_path: "{{ vault_secret_path }}/credentials"
-      - namespace: vault_extravers
-        app_code: "{{ survey_appcode | upper }}"
-        vault_env: "{{ vault_environment }}"
-        vault_secret_path: "{{ vault_secret_path }}/extra_vars"
-
-- name: Fetch the bearer token from Vault
-  ansible.builtin.set_fact:
-    pat_bearer_token: "{{ vault[vault_environment].vault_credentials.pat_bearer_token }}"
-
-- name: Send request to Service Desk API
-  ansible.builtin.uri:
-    url: "{{ servicedesk_api_url }}"
-    method: POST
-    headers:
-      Authorization: "Bearer {{ pat_bearer_token }}"
-    body: |
-      {
-        "serviceDeskId": "{{ servicedesk_id }}",
-        "requestTypeId": "{{ request_type_id }}",
-        "requestFieldValues": {{ custom_field_values | to_json }}
-      }
-    body_format: json
-    return_content: yes
-  register: response
-
-- name: Check if API call was successful
-  ansible.builtin.fail:
-    msg: "Failed to create Service Desk request: {{ response.msg }}"
-  when: response.status != 201
-
-- name: Debug the response from Service Desk API
-  ansible.builtin.debug:
-    msg: "Response from Service Desk API: {{ response }}"
+- name: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
+  job_type: run
+  playbook: main.yml
+  inventory: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
+  project: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
+  survey_enabled: true
+  ask_credential_on_launch: true
+  description: "Tableau Data Extraction"
+  state: "present"
+  credentials:
+  - "{{ .Values.HELIOS_APP_CODE }}_HashiCorp_Vault_AppRoles"
+  extra_vars:
+    vault_environment: "{{ .Values.VAULT_ENV }}"

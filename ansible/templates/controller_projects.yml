@@ -1,8 +1,0 @@
----
-app_controller_projects:
-- name: "{{ .Values.HELIOS_APP_CODE }}_{{ .Values.HELIOS_APP_NAME }}"
-  organization: "{{ .Values.HELIOS_APP_CODE }}"
-  scm_type: git
-  credential: "{{ .Values.HELIOS_APP_CODE }}_GitHub_PAT"
-  description: "Service Desk Request - Ansible automation to pull"
-  state: "present"

@@ -1,0 +1,22 @@
+---
+# Tableau Server Configuration
+tableau_server: "tableau.rbc.com"
+tableau_site: "your-site-name"
+tableau_api_version: "3.16"
+tableau_view_id: "failure-data-view"
+
+# Authentication (Replace with vault in production)
+tableau_username: "{{ lookup('env', 'TABLEAU_USERNAME') }}"
+tableau_password: "{{ lookup('env', 'TABLEAU_PASSWORD') }}"
+
+# Output Configuration
+output_dir: "../../output"
+
+# Validation Rules
+validation:
+  required_columns:
+  - id
+  - timestamp
+  - error_code
+  - description
+  max_missing_values_percent: 5

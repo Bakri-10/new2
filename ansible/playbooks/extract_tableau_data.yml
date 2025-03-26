@@ -1,0 +1,81 @@
+---
+- name: Tableau Data Extraction and Validation
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+  - "../../config/tableau_config.yml"
+
+  tasks:
+  - name: Ensure output directory exists
+    ansible.builtin.file:
+      path: "{{ output_dir }}"
+      state: directory
+      mode: '0755'
+
+  - name: Authenticate to Tableau
+    ansible.builtin.uri:
+      url: "https://{{ tableau_server }}/api/{{ tableau_api_version }}/auth/signin"
+      method: POST
+      body_format: json
+      body:
+        credentials:
+          site:
+            contentUrl: "{{ tableau_site }}"
+          name: "{{ tableau_username }}"
+          password: "{{ tableau_password }}"
+      headers:
+        Content-Type: "application/json"
+      status_code: 200
+      return_content: yes
+    register: auth_response
+    no_log: true
+
+  - name: Extract authentication token
+    ansible.builtin.set_fact:
+      auth_token: "{{ auth_response.json.credentials.token }}"
+      site_id: "{{ auth_response.json.credentials.site.id }}"
+    no_log: true
+
+  - name: Extract failure data
+    ansible.builtin.uri:
+      url: "https://{{ tableau_server }}/api/{{ tableau_api_version }}/sites/{{ site_id }}/views/{{ tableau_view_id }}/data"
+      method: GET
+      headers:
+        X-Tableau-Auth: "{{ auth_token }}"
+      status_code: 200
+      return_content: yes
+    register: data_response
+
+  - name: Save raw data
+    ansible.builtin.copy:
+      content: "{{ data_response.content | from_json | to_nice_json }}"
+      dest: "{{ output_dir }}/raw_failure_data.json"
+      mode: '0644'
+
+  - name: Process and validate data
+    ansible.builtin.script:
+      cmd: "../../scripts/process_tableau_data.py"
+    args:
+      executable: python3
+      chdir: "{{ output_dir }}"
+    environment:
+      INPUT_FILE: "{{ output_dir }}/raw_failure_data.json"
+      OUTPUT_CSV: "{{ output_dir }}/processed_failure_data.csv"
+      OUTPUT_JSON: "{{ output_dir }}/processed_failure_data.json"
+    register: processed_data
+
+  - name: Debug validation results
+    ansible.builtin.debug:
+      msg: "{{ processed_data.stdout_lines }}"
+
+  - name: Check for validation errors
+    ansible.builtin.fail:
+      msg: "Data validation failed. Please check the logs."
+    when: processed_data.rc != 0
+
+  - name: Generate summary report
+    ansible.builtin.template:
+      src: "../../config/report_template.j2"
+      dest: "{{ output_dir }}/extraction_report.html"
+    when: processed_data.rc == 0

@@ -1,25 +1,16 @@
----
-- name: Tableau Data Extraction and Validation
-  hosts: localhost
-  gather_facts: false
-
-  vars_files:
-  - "config/tableau_config.yml"
-
-  vars:
-    vault_environment: "{{ env }}"
-    secrets:
-    - namespace: vault_credentials
-      app_code: "{{ survey_appcode | upper }}"
-      vault_env: "{{ env }}"
-      vault_secret_path: "{{ vault_secret_path }}/credentials"
-      vault_role_id: "{{ vault_role_id }}"
-      vault_secret_id: "{{ vault_secret_id }}"
-
-  roles:
-  - { role: rbc_common.hashicorp_vault.vault_init }
-
-  tasks:
-  - name: Include Tableau extraction tasks
-    ansible.builtin.include_tasks:
-      file: ansible/playbooks/extract_tableau_data.yml
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "issueType.keyword": "Vulnerability" } },
+        { "terms": { "appCode.keyword": ["appCode1", "appCode2"] } },
+        { "range": { "timestamp": { "gte": "start_date", "lte": "end_date" } } }
+      ],
+      "must_not": [
+        { "term": { "priority.keyword": "P3" } },
+        { "term": { "dataSource.keyword": "Nexus IQ" } }
+      ]
+    }
+  }
+}
